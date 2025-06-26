@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import database from './src/utils/sqlite-db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -193,6 +194,161 @@ app.delete('/api/delete-file/:fileName', async (req, res) => {
   } catch (error) {
     console.error('Lỗi khi xóa file:', error);
     res.status(500).json({ error: 'Lỗi khi xóa file' });
+  }
+});
+
+// Initialize database
+app.post('/api/database/init', async (req, res) => {
+  try {
+    await database.init();
+    res.json({ success: true, message: 'Database đã được khởi tạo' });
+  } catch (error) {
+    console.error('Lỗi khởi tạo database:', error);
+    res.status(500).json({ error: 'Không thể khởi tạo database' });
+  }
+});
+
+// User API endpoints
+app.post('/api/users/authenticate', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await database.authenticateUser(email, password);
+    res.json(user);
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
+
+app.post('/api/users/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await database.registerUser(email, password);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await database.getAllUsers();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const updates = req.body;
+    const user = await database.updateUser(userId, updates);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const result = await database.deleteUser(userId);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Track API endpoints
+app.get('/api/tracks', async (req, res) => {
+  try {
+    const tracks = await database.getAllTracks();
+    res.json(tracks);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/tracks', async (req, res) => {
+  try {
+    const trackData = req.body;
+    const track = await database.addTrack(trackData);
+    res.json(track);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.put('/api/tracks/:id', async (req, res) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const updates = req.body;
+    const track = await database.updateTrack(trackId, updates);
+    res.json(track);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/tracks/:id', async (req, res) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const result = await database.deleteTrack(trackId);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Settings API endpoints
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await database.getSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    const updates = req.body;
+    const settings = await database.updateSettings(updates);
+    res.json(settings);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Progress API endpoints
+app.post('/api/progress', async (req, res) => {
+  try {
+    const { userId, trackId, currentTime } = req.body;
+    const result = await database.saveProgress(userId, trackId, currentTime);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/progress/:userId/:trackId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const trackId = parseInt(req.params.trackId);
+    const progress = await database.getProgress(userId, trackId);
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/progress/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const progress = await database.getUserProgress(userId);
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

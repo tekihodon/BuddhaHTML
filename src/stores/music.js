@@ -140,7 +140,7 @@ export const musicStore = {
           
           // Restore saved progress if exists (only for first URL)
           if (i === 0) {
-            const savedProgress = musicStore.getSavedProgress(track.id);
+            const savedProgress = await musicStore.getSavedProgress(track.id);
             if (savedProgress > 0) {
               audioElement.currentTime = savedProgress;
             }
@@ -250,24 +250,42 @@ export const musicStore = {
   },
   
   // Save progress for current user
-  saveProgress: (trackId, time, userId) => {
+  saveProgress: async (trackId, time, userId) => {
     if (!userId || !trackId) return;
     
-    const progressKey = `progress_${userId}_${trackId}`;
-    localStorage.setItem(progressKey, time.toString());
+    try {
+      await fetch('/api/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          trackId,
+          currentTime: time
+        })
+      });
+    } catch (error) {
+      console.error('Lỗi lưu progress:', error);
+    }
   },
   
   // Get saved progress
-  getSavedProgress: (trackId) => {
+  getSavedProgress: async (trackId) => {
     const currentUserData = localStorage.getItem('currentUser');
     if (!currentUserData || !trackId) return 0;
     
     try {
       const user = JSON.parse(currentUserData);
-      const progressKey = `progress_${user.id}_${trackId}`;
-      const saved = localStorage.getItem(progressKey);
-      return saved ? parseFloat(saved) : 0;
-    } catch {
+      const response = await fetch(`/api/progress/${user.id}/${trackId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.currentTime || 0;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Lỗi lấy progress:', error);
       return 0;
     }
   },
