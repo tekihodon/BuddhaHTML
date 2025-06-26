@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    image: tekihodon/buddhahtml:latest
+    container_name: buddhahtml
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  uploads:
+    driver: local
