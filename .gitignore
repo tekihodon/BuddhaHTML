@@ -345,5 +345,14 @@ Base-AI-Project-master/
 .appdexer/
 .trae/
 
+# Irrelevant markdown files
+Project.md
+Design-to-prompt.md
+Instruction.md
+Decisions.md
+Diagram.md
+mapping.md
+instructions/
+
 # Submodules causing issues
 tools/Review-Gate/
