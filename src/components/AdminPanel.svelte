@@ -279,24 +279,64 @@
           return;
         }
         
-        // Store file info instead of converting to data URL to avoid localStorage quota
-        trackForm.url = `local://${selectedAudioFile.name}`;
-        trackForm.fileSize = selectedAudioFile.size;
-        trackForm.fileType = selectedAudioFile.type;
+        // Upload audio file to server
+        const audioFormData = new FormData();
+        audioFormData.append('file', selectedAudioFile);
+        
+        try {
+          // Upload audio file to server
+          const response = await fetch('/api/upload-file', {
+            method: 'POST',
+            body: audioFormData
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Lỗi upload file: ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          trackForm.url = result.fileUrl; // Use URL from server response
+          trackForm.fileSize = selectedAudioFile.size;
+          trackForm.fileType = selectedAudioFile.type;
+          
+          console.log('File âm thanh đã được upload lên server:', result.fileUrl);
+        } catch (uploadError) {
+          console.error('Lỗi upload file âm thanh:', uploadError);
+          errorMessage = `Không thể upload file âm thanh: ${uploadError.message}`;
+          return;
+        }
         
         // For thumbnail, only convert if it's small enough (< 500KB)
         if (selectedThumbnailFile) {
           if (selectedThumbnailFile.size < 500000) { // 500KB limit
             trackForm.thumbnail = await convertFileToDataUrl(selectedThumbnailFile);
           } else {
-            trackForm.thumbnail = `local://${selectedThumbnailFile.name}`;
-            errorMessage = 'Hình ảnh quá lớn (>500KB). Vui lòng chọn hình ảnh nhỏ hơn hoặc sử dụng URL.';
-            return;
+            // Upload thumbnail to server
+            const thumbnailFormData = new FormData();
+            thumbnailFormData.append('file', selectedThumbnailFile);
+            
+            try {
+              const response = await fetch('/api/upload-file', {
+                method: 'POST',
+                body: thumbnailFormData
+              });
+              
+              if (!response.ok) {
+                throw new Error(`Lỗi upload thumbnail: ${response.statusText}`);
+              }
+              
+              const result = await response.json();
+              trackForm.thumbnail = result.fileUrl;
+              console.log('Thumbnail đã được upload lên server:', result.fileUrl);
+            } catch (thumbnailError) {
+              console.error('Lỗi upload thumbnail:', thumbnailError);
+              errorMessage = `Không thể upload thumbnail: ${thumbnailError.message}`;
+              return;
+            }
           }
         }
         
-        // Show warning about file storage limitation
-        successMessage = 'Lưu ý: Do giới hạn localStorage, file âm thanh chỉ được lưu thông tin tham chiếu. Để phát nhạc thực tế, vui lòng sử dụng URL từ server.';
+        successMessage = 'File âm thanh đã được upload lên server thành công!';
       }
       
       // For editing, only update thumbnail if new file selected

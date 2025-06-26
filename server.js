@@ -4,6 +4,7 @@ import axios from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,23 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Cấu hình multer để xử lý upload file
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Tạo tên file an toàn và tránh trùng lặp
+    const originalName = file.originalname;
+    const fileExtension = path.extname(originalName);
+    const baseName = path.basename(originalName, fileExtension);
+    const safeFileName = baseName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Date.now() + fileExtension;
+    cb(null, safeFileName);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // Serve static files from the dist directory after build
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -111,6 +129,27 @@ app.post('/api/download-from-drive', async (req, res) => {
       error: errorMessage,
       details: error.message 
     });
+  }
+});
+
+// API endpoint to upload file
+app.post('/api/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Không có file nào được upload' });
+    }
+    
+    // Trả về thông tin file đã upload
+    res.json({
+      fileName: req.file.filename,
+      originalName: req.file.originalname,
+      fileSize: req.file.size,
+      fileType: req.file.mimetype,
+      fileUrl: `/uploads/${req.file.filename}`
+    });
+  } catch (error) {
+    console.error('Lỗi khi upload file:', error);
+    res.status(500).json({ error: 'Không thể upload file' });
   }
 });
 

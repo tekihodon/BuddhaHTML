@@ -10,6 +10,7 @@ export const isLoading = writable(false);
 export const authStore = {
   login: (user) => {
     currentUser.set(user);
+    // Lưu thông tin người dùng vào localStorage mà không có thời hạn
     localStorage.setItem('currentUser', JSON.stringify(user));
   },
   

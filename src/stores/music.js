@@ -122,7 +122,20 @@ export const musicStore = {
       for (let i = 0; i < urlsToTry.length && !success; i++) {
         try {
           console.log(`Thử URL ${i + 1}/${urlsToTry.length}:`, urlsToTry[i]);
-          audioElement.src = urlsToTry[i];
+          
+          // Xử lý URL dựa trên loại
+          let finalUrl = urlsToTry[i];
+          
+          // Nếu là URL local, chuyển đổi thành URL server
+          if (finalUrl.startsWith('local://')) {
+            // Lấy tên file từ URL local
+            const fileName = finalUrl.replace('local://', '');
+            // Chuyển đổi thành URL server
+            finalUrl = `/uploads/${fileName}`;
+            console.log('Đã chuyển đổi URL local thành URL server:', finalUrl);
+          }
+          
+          audioElement.src = finalUrl;
           await audioElement.load();
           
           // Restore saved progress if exists (only for first URL)
