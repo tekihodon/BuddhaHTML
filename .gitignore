@@ -344,3 +344,6 @@ Base-AI-Project-master/
 # Development tools
 .appdexer/
 .trae/
+
+# Submodules causing issues
+tools/Review-Gate/
