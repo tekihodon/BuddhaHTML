@@ -16,6 +16,9 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve static files from the dist directory after build
+app.use(express.static(path.join(__dirname, 'dist')));
+
 // Tạo thư mục uploads nếu chưa tồn tại
 const uploadsDir = path.join(__dirname, 'uploads');
 fs.ensureDirSync(uploadsDir);
@@ -73,7 +76,7 @@ app.post('/api/download-from-drive', async (req, res) => {
     
     // Trả về thông tin file đã lưu
     const fileStats = await fs.stat(filePath);
-    const serverUrl = `http://localhost:${PORT}/uploads/${safeFileName}`;
+    const serverUrl = `/uploads/${safeFileName}`;
     
     res.json({
       success: true,
@@ -124,7 +127,7 @@ app.get('/api/uploaded-files', async (req, res) => {
       fileList.push({
         name: file,
         size: stats.size,
-        url: `http://localhost:${PORT}/uploads/${file}`,
+        url: `/uploads/${file}`,
         uploadedAt: stats.mtime
       });
     }
@@ -163,7 +166,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Catch-all route to serve the SPA for any non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+    return res.status(404).json({ error: 'API endpoint không tồn tại' });
+  }
+  
+  // Serve the SPA's index.html for all other routes
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
   console.log(`📁 Thư mục uploads: ${uploadsDir}`);
+  console.log(`💻 Ứng dụng web có thể truy cập tại http://localhost:${PORT}`);
 });

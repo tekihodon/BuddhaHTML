@@ -79,7 +79,7 @@
     successMessage = '';
     
     try {
-      const response = await fetch('http://localhost:3000/api/health', {
+      const response = await fetch('/api/health', {
         method: 'GET',
         timeout: 5000
       });
@@ -125,7 +125,7 @@
         
         try {
           // Download file to server
-          const response = await fetch('http://localhost:3000/api/download-from-drive', {
+          const response = await fetch('/api/download-from-drive', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

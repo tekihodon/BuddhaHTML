@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "server": "node server.js",
-    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
+    "prestart": "node scripts/check-build.js",
+    "start": "npm run server"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
