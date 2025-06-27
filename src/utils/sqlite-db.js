@@ -139,7 +139,7 @@ class Database {
   async registerUser(email, password) {
     return new Promise((resolve, reject) => {
       const query = 'INSERT INTO users (email, password) VALUES (?, ?)';
-      this.db.run(query, [email, password], function(err) {
+      this.db.run(query, [email, password], (err) => {
         if (err) {
           if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
             reject(new Error('Email đã được sử dụng'));
@@ -147,11 +147,20 @@ class Database {
             reject(err);
           }
         } else {
-          resolve({
-            id: this.lastID,
-            email,
-            isAdmin: false,
-            createdAt: new Date().toISOString()
+          // Note: this.lastID is not available in arrow functions with sqlite3
+          // We need to get the inserted user differently
+          const selectQuery = 'SELECT * FROM users WHERE email = ?';
+          this.db.get(selectQuery, [email], (err, row) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve({
+                id: row.id,
+                email: row.email,
+                isAdmin: row.isAdmin || false,
+                createdAt: row.createdAt
+              });
+            }
           });
         }
       });
@@ -178,6 +187,7 @@ class Database {
       values.push(userId);
       
       const query = `UPDATE users SET ${fields} WHERE id = ?`;
+      const db = this.db; // Save reference to db
       this.db.run(query, values, function(err) {
         if (err) {
           reject(err);
@@ -186,7 +196,7 @@ class Database {
         } else {
           // Get updated user
           const selectQuery = 'SELECT id, email, isAdmin, createdAt FROM users WHERE id = ?';
-          this.db.get(selectQuery, [userId], (err, row) => {
+          db.get(selectQuery, [userId], (err, row) => {
             if (err) {
               reject(err);
             } else {
@@ -235,13 +245,14 @@ class Database {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
       
+      const db = this.db; // Save reference to db
       this.db.run(query, [title, artist, url, thumbnail, duration, fileSize, fileType], function(err) {
         if (err) {
           reject(err);
         } else {
           // Get the inserted track
           const selectQuery = 'SELECT * FROM tracks WHERE id = ?';
-          this.db.get(selectQuery, [this.lastID], (err, row) => {
+          db.get(selectQuery, [this.lastID], (err, row) => {
             if (err) {
               reject(err);
             } else {
@@ -260,6 +271,7 @@ class Database {
       values.push(trackId);
       
       const query = `UPDATE tracks SET ${fields} WHERE id = ?`;
+      const db = this.db; // Save reference to db
       this.db.run(query, values, function(err) {
         if (err) {
           reject(err);
@@ -268,7 +280,7 @@ class Database {
         } else {
           // Get updated track
           const selectQuery = 'SELECT * FROM tracks WHERE id = ?';
-          this.db.get(selectQuery, [trackId], (err, row) => {
+          db.get(selectQuery, [trackId], (err, row) => {
             if (err) {
               reject(err);
             } else {
@@ -282,15 +294,35 @@ class Database {
 
   async deleteTrack(trackId) {
     return new Promise((resolve, reject) => {
-      const query = 'DELETE FROM tracks WHERE id = ?';
-      this.db.run(query, [trackId], function(err) {
+      // Lấy thông tin file trước khi xóa
+      const selectQuery = 'SELECT url, thumbnail FROM tracks WHERE id = ?';
+      this.db.get(selectQuery, [trackId], (err, row) => {
         if (err) {
           reject(err);
-        } else if (this.changes === 0) {
-          reject(new Error('Bài hát không tồn tại'));
-        } else {
-          resolve({ success: true });
+          return;
         }
+        
+        if (!row) {
+          reject(new Error('Bài hát không tồn tại'));
+          return;
+        }
+        
+        // Xóa record khỏi database
+        const deleteQuery = 'DELETE FROM tracks WHERE id = ?';
+        this.db.run(deleteQuery, [trackId], function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            // Trả về thông tin file để server có thể xóa file vật lý
+            resolve({ 
+              success: true, 
+              fileInfo: {
+                url: row.url,
+                thumbnail: row.thumbnail
+              }
+            });
+          }
+        });
       });
     });
   }
@@ -319,13 +351,14 @@ class Database {
       const values = Object.values(updates);
       
       const query = `UPDATE settings SET ${fields} WHERE id = 1`;
+      const db = this.db; // Save reference to db
       this.db.run(query, values, function(err) {
         if (err) {
           reject(err);
         } else {
           // Get updated settings
           const selectQuery = 'SELECT * FROM settings WHERE id = 1';
-          this.db.get(selectQuery, [], (err, row) => {
+          db.get(selectQuery, [], (err, row) => {
             if (err) {
               reject(err);
             } else {

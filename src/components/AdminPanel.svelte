@@ -27,7 +27,6 @@
   let showTrackForm = false;
   let editingTrack = null;
   let trackForm = { title: '', artist: '', url: '', thumbnail: '', duration: 0 };
-  let newTrack = { title: '', artist: '', audioUrl: '', thumbnail: '', duration: 0 };
   
   // File upload management
   let uploadStep = 1; // 1: file selection, 2: edit info
@@ -211,18 +210,18 @@
 
   function proceedToEditStep() {
     // Check if either URL or file is provided
-    if (!newTrack.audioUrl && !selectedAudioFile) {
+    if (!trackForm.url && !selectedAudioFile) {
       errorMessage = 'Vui lòng nhập URL âm thanh hoặc chọn file âm thanh trước khi tiếp tục!';
       return;
     }
     
-    // Auto-fill track title from filename if file is selected
-     if (selectedAudioFile && !newTrack.title) {
-       newTrack.title = selectedAudioFile.name.replace(/\.[^/.]+$/, "");
+    // Auto-fill track title from filename if file is selected (only if title is empty)
+     if (selectedAudioFile && !trackForm.title) {
+       trackForm.title = selectedAudioFile.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
      }
      
      // If URL is provided, clear file selection to avoid conflicts
-     if (newTrack.audioUrl && selectedAudioFile) {
+     if (trackForm.url && selectedAudioFile) {
        selectedAudioFile = null;
        audioPreviewUrl = null;
        successMessage = 'Đã chọn URL, bỏ qua file đã chọn.';
@@ -686,13 +685,13 @@
                               <label class="option-label">🔗 Nhập URL âm thanh (Khuyến nghị)</label>
                               <input 
                                 type="url" 
-                                bind:value={newTrack.audioUrl}
+                                bind:value={trackForm.url}
                                 placeholder="https://example.com/audio.mp3"
                                 class="form-input"
                               />
-                              {#if newTrack.audioUrl}
-                                <audio controls class="audio-preview">
-                                  <source src={newTrack.audioUrl} />
+                              {#if trackForm.url}
+                            <audio controls class="audio-preview">
+                              <source src={trackForm.url} />
                                   Trình duyệt không hỗ trợ phát âm thanh.
                                 </audio>
                               {/if}

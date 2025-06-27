@@ -14,10 +14,8 @@
       await initDatabase();
       
       // Kiểm tra session đã lưu
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        authStore.login(user);
+      const user = authStore.checkAuth();
+      if (user) {
         currentView = user.isAdmin ? 'admin' : 'dashboard';
       }
     } catch (error) {

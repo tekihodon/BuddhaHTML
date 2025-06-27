@@ -294,6 +294,34 @@ app.delete('/api/tracks/:id', async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const result = await database.deleteTrack(trackId);
+    
+    // Xóa file vật lý nếu có thông tin file
+    if (result.fileInfo) {
+      const { url, thumbnail } = result.fileInfo;
+      
+      // Xóa file audio nếu là file local (không phải URL)
+      if (url && url.startsWith('/uploads/')) {
+        const audioFilePath = path.join(__dirname, url);
+        try {
+          await fs.remove(audioFilePath);
+          console.log('Đã xóa file audio:', audioFilePath);
+        } catch (fileError) {
+          console.error('Lỗi xóa file audio:', fileError);
+        }
+      }
+      
+      // Xóa file thumbnail nếu là file local
+      if (thumbnail && thumbnail.startsWith('/uploads/')) {
+        const thumbnailFilePath = path.join(__dirname, thumbnail);
+        try {
+          await fs.remove(thumbnailFilePath);
+          console.log('Đã xóa file thumbnail:', thumbnailFilePath);
+        } catch (fileError) {
+          console.error('Lỗi xóa file thumbnail:', fileError);
+        }
+      }
+    }
+    
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
