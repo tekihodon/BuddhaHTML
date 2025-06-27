@@ -9,26 +9,35 @@
 npm install
 ```
 
-### Phát triển
+### 4. Chạy ứng dụng
 
+#### Development mode (Khuyến nghị)
 ```bash
-# Chạy môi trường phát triển (development)
+# Chạy cả frontend và backend cùng lúc
 npm run dev:full
 ```
 
-Lệnh này sẽ khởi động cả server Express (cổng 3000) và server Vite (cổng 3000) để phát triển.
-
-### Triển khai
-
+#### Production mode
 ```bash
-# Build ứng dụng
+# Build và chạy ứng dụng
 npm run build
-
-# Chạy ứng dụng đã build
 npm start
 ```
 
+#### Chạy riêng biệt (nếu cần)
+```bash
+# Terminal 1: Chạy backend server
+npm run server
+
+# Terminal 2: Chạy frontend development
+npm run dev
+```
+
+Ứng dụng sẽ chạy tại `http://localhost:3000`
+
 Lệnh `npm start` sẽ tự động kiểm tra xem thư mục `dist` đã tồn tại chưa. Nếu chưa, nó sẽ tự động chạy lệnh build trước khi khởi động server.
+
+### Triển khai
 
 ### Sử dụng Docker
 
@@ -77,7 +86,28 @@ Workflow sẽ tự động chạy khi:
 
 Xem hướng dẫn chi tiết về thiết lập CI/CD tại [docs/CICD-SETUP.md](docs/CICD-SETUP.md).
 
-## Tính năng
+## 🚀 Bắt đầu nhanh
+
+```bash
+# 1. Cài đặt dependencies
+npm install
+
+# 2. Chạy ứng dụng (cả frontend và backend)
+npm run dev:full
+
+# 3. Mở trình duyệt tại http://localhost:3000
+```
+
+## 🔧 Scripts có sẵn
+
+- `npm run dev:full`: Chạy cả frontend và backend cùng lúc (khuyến nghị)
+- `npm run dev`: Chỉ chạy Vite development server
+- `npm run server`: Chỉ chạy Express backend server
+- `npm run build`: Build production
+- `npm run preview`: Preview production build
+- `npm start`: Chạy production server (tự động build nếu cần)
+
+## ✨ Tính năng chính
 
 - Nghe nhạc Phật giáo
 - Tích hợp với Google Drive để tải nhạc
